@@ -152,3 +152,94 @@
     </ul>
     <div class="pay-box">
       <div>
+        <div style="font-size:11px; color:#94a3b8;">Tek Seferlik Ömür Boyu</div>
+        <div style="font-size:22px; font-weight:800; color:#fff;">59,00 ₺</div>
+      </div>
+      <a href=https://www.shopier.com/TasarrufMerkezi/53392425
+ target="_blank" rel="noopener" class="pay-btn">Shopier ile Öde →</a>
+    </div>
+    <div style="background:#0f172a; border:1px solid #334155; border-radius:12px; padding:12px;">
+      <label style="margin:0;">Ödeme sonrası aldığın PRO Aktivasyon Kodu:</label>
+      <div style="display:flex; gap:8px; margin-top:6px;">
+        <input type="text" id="proCodeInput" placeholder="Örn: PRO2026" style="text-transform:uppercase;">
+        <button type="button" onclick="activatePro()" style="background:#3b82f6; color:#fff; border:none; padding:0 14px; border-radius:10px; font-weight:700;">Aktif Et</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  let subs = JSON.parse(localStorage.getItem('bk_subs') || '[]');
+  let isPro = localStorage.getItem('bk_is_pro') === 'true';
+
+  function formatMoney(n) {
+    return n.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' ₺';
+  }
+
+  function quickFill(name, price, cat) {
+    document.getElementById('name').value = name;
+    document.getElementById('price').value = price;
+    document.getElementById('category').value = cat;
+    if (!document.getElementById('billingDay').value) document.getElementById('billingDay').value = 15;
+  }
+
+  function activatePro() {
+    const code = document.getElementById('proCodeInput').value.trim().toUpperCase();
+    if (code === 'PRO2026') {
+      isPro = true;
+      localStorage.setItem('bk_is_pro', 'true');
+      document.getElementById('proModal').style.display = 'none';
+      render();
+      alert('Tebrikler! Bütçe Kalkanı PRO aktif edildi.');
+    } else {
+      alert('Geçersiz kod. Shopier ödeme sayfasındaki aktivasyon kodunu girin.');
+    }
+  }
+
+  function render() {
+    const list = document.getElementById('subList');
+    const badge = document.getElementById('planBadge');
+    const upBtn = document.getElementById('upgradeBtn');
+    if (isPro) {
+      badge.textContent = 'PRO Üye (Sınırsız)';
+      badge.style.background = '#064e3b';
+      badge.style.color = '#34d399';
+      upBtn.style.display = 'none';
+    }
+    let monthly = 0;
+    list.innerHTML = subs.length === 0 ? '<div class="card" style="text-align:center; color:#94a3b8; font-size:14px;">Henüz abonelik eklemedin. Soldan ilk aboneliğini ekle!</div>' : '';
+    subs.forEach((s, idx) => {
+      monthly += parseFloat(s.price);
+      list.innerHTML += `<div class="sub-item"><div><div class="sub-title">${s.name} <span class="sub-cat">${s.category}</span></div><div class="sub-meta">Her ayın ${s.billingDay}. günü • Yıllık: ${formatMoney(s.price * 12)}</div></div><div style="display:flex; align-items:center;"><div class="sub-price">${formatMoney(parseFloat(s.price))}</div><button type="button" class="del-btn" onclick="deleteSub(${idx})">✕</button></div></div>`;
+    });
+    document.getElementById('monthlyTotal').textContent = formatMoney(monthly);
+    document.getElementById('yearlyTotal').textContent = formatMoney(monthly * 12);
+    document.getElementById('subCount').textContent = isPro ? `${subs.length} / Sınırsız` : `${subs.length} / 3`;
+  }
+
+  document.getElementById('subForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!isPro && subs.length >= 3) { document.getElementById('proModal').style.display = 'flex'; return; }
+    subs.push({ name: document.getElementById('name').value.trim(), price: parseFloat(document.getElementById('price').value), billingDay: parseInt(document.getElementById('billingDay').value, 10), category: document.getElementById('category').value });
+    localStorage.setItem('bk_subs', JSON.stringify(subs));
+    this.reset();
+    render();
+  });
+
+  function deleteSub(idx) {
+    subs.splice(idx, 1);
+    localStorage.setItem('bk_subs', JSON.stringify(subs));
+    render();
+  }
+
+  function analyzeSavings() {
+    if (!isPro) { document.getElementById('proModal').style.display = 'flex'; return; }
+    if (subs.length === 0) { alert('Önce en az bir abonelik ekleyin.'); return; }
+    const top = [...subs].sort((a, b) => b.price - a.price)[0];
+    alert(`PRO Tasarruf Analizi: En yüksek gideriniz ${top.name} (Yıllık ${formatMoney(top.price * 12)}). Bu aboneliği iptal ederek yılda ${formatMoney(top.price * 12)} tasarruf edebilirsiniz.`);
+  }
+
+  render();
+</script>
+</body>
+</html>
